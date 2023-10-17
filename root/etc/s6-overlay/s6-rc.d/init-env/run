@@ -1,0 +1,148 @@
+#!/usr/bin/with-contenv bash
+
+# set default values for variables
+declare -A KOEL_CONF
+KOEL_CONF[APP_NAME]=${APP_NAME:-Koel}
+KOEL_CONF[APP_ENV]=${APP_ENV:-production}
+KOEL_CONF[APP_DEBUG]=${APP_DEBUG:-true}
+KOEL_CONF[APP_URL]=${APP_URL:-http://localhost:8000}
+# A random 32-char string. You can leave this empty if use php artisan koel:init.
+KOEL_CONF[APP_KEY]=${APP_KEY:-}
+# Database connection name, which corresponds to the database driver.
+# Possible values are:
+#   mysql (MySQL/MariaDB - default)
+#   pgsql (PostgreSQL)
+#   sqlsrv (Microsoft SQL Server)
+#   sqlite-persistent (Local sqlite file)
+# IMPORTANT: This value must present for `artisan koel:init` command to work.
+KOEL_CONF[DB_CONNECTION]=${DB_CONNECTION:-mysql}
+KOEL_CONF[DB_HOST]=${DB_HOST:-127.0.0.1}
+KOEL_CONF[DB_PORT]=${DB_PORT:-3306}
+KOEL_CONF[DB_DATABASE]=${DB_DATABASE:-koel}
+KOEL_CONF[DB_USERNAME]=${DB_USERNAME:-koel}
+KOEL_CONF[DB_PASSWORD]=${DB_PASSWORD:-}
+# Some providers (e.g. Heroku) provide a "database URL" instead separated config values, which
+# you can use here instead.
+KOEL_CONF[DATABASE_URL]=${DATABASE_URL:-}
+# The absolute path to the root CA bundle if you're connecting to the MySQL database via SSL.
+KOEL_CONF[MYSQL_ATTR_SSL_CA]=${MYSQL_ATTR_SSL_CA:-}
+# The ABSOLUTE path to your media. This value can always be changed later via the web interface.
+KOEL_CONF[MEDIA_PATH]=${MEDIA_PATH:-}
+# By default, Koel ignores dot files and folders. This greatly improves performance if your media
+# root have folders like .git or .cache. If by any chance your media files are under a dot folder,
+# set the following setting to false.
+KOEL_CONF[IGNORE_DOT_FILES]=${IGNORE_DOT_FILES:-true}
+# The maximum scan time, in seconds. Increase this if you have a huge library.
+# Note: This setting doesn't have effect when scanning via koel:sync.
+KOEL_CONF[APP_MAX_SCAN_TIME]=${APP_MAX_SCAN_TIME:-600}
+# The memory limit, in MB, used by the scanning process.
+# For example, if you want to set a memory limit of 2048MB, enter "2048" (without
+# quotes) here.
+KOEL_CONF[MEMORY_LIMIT]=${MEMORY_LIMIT:-}
+# The streaming method.
+# Can be either 'php' (default), 'x-sendfile', or 'x-accel-redirect'
+# See https://docs.koel.dev/#streaming-music for more information.
+# Note: This setting doesn't have effect if the media needs transcoding (e.g. FLAC).
+# ##################################################
+# IMPORTANT: It's HIGHLY recommended to use 'x-sendfile' or 'x-accel-redirect' if
+# you plan to use the Koel mobile apps.
+# ##################################################
+KOEL_CONF[STREAMING_METHOD]=${STREAMING_METHOD:-php}
+# Full text search driver.
+# Koel supports all drivers supported by Laravel (see https://laravel.com/docs/9.x/scout).
+# Available drivers: 'tntsearch' (default), 'database', 'algolia' or 'meilisearch'.
+# For Algolia or MeiliSearch, you need to provide the corresponding credentials.
+KOEL_CONF[SCOUT_DRIVER]=${SCOUT_DRIVER:-tntsearch}
+KOEL_CONF[ALGOLIA_APP_ID]=${ALGOLIA_APP_ID:-}
+KOEL_CONF[ALGOLIA_SECRET]=${ALGOLIA_SECRET:-}
+KOEL_CONF[MEILISEARCH_HOST]=${MEILISEARCH_HOST:-}
+KOEL_CONF[MEILISEARCH_KEY]=${MEILISEARCH_KEY:-}
+# Last.fm API can be used to fetch artist and album information, as well as to
+# allow users to connect to their Last.fm account and scrobble.
+# To integrate Koel with Last.fm, create an API account at
+# https://www.last.fm/api/account/create and set the credentials here.
+# Consult Koel's doc for more information.
+KOEL_CONF[LASTFM_API_KEY]=${LASTFM_API_KEY:-}
+KOEL_CONF[LASTFM_API_SECRET]=${LASTFM_API_SECRET:-}
+# Spotify API can be used to fetch artist and album images.
+# To integrate Koel with Spotify, create a Spotify application at
+# https://developer.spotify.com/dashboard/applications and set the credentials here.
+# Consult Koel's doc for more information.
+KOEL_CONF[SPOTIFY_CLIENT_ID]=${SPOTIFY_CLIENT_ID:-}
+KOEL_CONF[SPOTIFY_CLIENT_SECRET]=${SPOTIFY_CLIENT_SECRET:-}
+# To use Amazon S3 with Koel, fill the info here and follow the
+# installation guide at https://docs.koel.dev/aws-s3.html
+KOEL_CONF[AWS_ACCESS_KEY_ID]=${AWS_ACCESS_KEY_ID:-}
+KOEL_CONF[AWS_SECRET_ACCESS_KEY]=${AWS_SECRET_ACCESS_KEY:-}
+KOEL_CONF[AWS_REGION]=${AWS_REGION:-}
+KOEL_CONF[AWS_ENDPOINT]=${AWS_ENDPOINT:-}
+# To integrate Koel with YouTube, set the API key here.
+# See https://docs.koel.dev/3rd-party.html#youtube for more information.
+KOEL_CONF[YOUTUBE_API_KEY]="${YOUTUBE_API_KEY:-}"
+# You can also configure Koel to use a CDN to serve the media files.
+# This url must be mapped to the home URL of your Koel's installation.
+# No trailing slash.
+KOEL_CONF[CDN_URL]="${CDN_URL:-}"
+# To transcode FLAC to MP3 and stream it on the fly, make sure the following settings are sane.
+# The full path of ffmpeg binary.
+KOEL_CONF[FFMPEG_PATH]="${FFMPEG_PATH:-/usr/local/bin/ffmpeg}"
+
+# The bit rate of the output mp3 stream. Higher value results in better quality,
+# but slower streaming and more bandwidth.
+KOEL_CONF[OUTPUT_BIT_RATE]=${OUTPUT_BIT_RATE:-128}
+# Whether to allow song downloading.
+# Note that if you're downloading more than one song, Koel will zip them up
+# using PHP's ZipArchive. So if the module isn't available in the current
+# environment, such a download will (silently) fail.
+KOEL_CONF[ALLOW_DOWNLOAD]="${ALLOW_DOWNLOAD:-true}"
+# Whether to create a backup of a song instead of deleting it from the filesystem.
+# If true, the song will simply be renamed into a .bak file.
+KOEL_CONF[BACKUP_ON_DELETE]="${BACKUP_ON_DELETE:-true}"
+# Koel attempts to detect if your website use HTTPS and generates secure URLs accordingly.
+# If this attempt fails for any reason, you can force it by setting this value to true.
+KOEL_CONF[FORCE_HTTPS]=${FORCE_HTTPS:-}
+# Pusher configuration, for interesting features such as remote controlling.
+KOEL_CONF[PUSHER_APP_ID]=${PUSHER_APP_ID:-}
+KOEL_CONF[PUSHER_APP_KEY]=${PUSHER_APP_KEY:-}
+KOEL_CONF[PUSHER_APP_SECRET]=${PUSHER_APP_SECRET:-}
+KOEL_CONF[PUSHER_APP_CLUSTER]=${PUSHER_APP_CLUSTER:-}
+# The following settings are for Koel to send emails, for example to send user invitations and reset passwords.
+KOEL_CONF[MAIL_FROM_ADDRESS]="${MAIL_FROM_ADDRESS:-hello@example.com}"
+KOEL_CONF[MAIL_FROM_NAME]="${MAIL_FROM_NAME:-${APP_NAME}}"
+KOEL_CONF[MAIL_MAILER]="${MAIL_MAILER:-smtp}"
+KOEL_CONF[MAIL_HOST]="${MAIL_HOST:-mailhog}"
+KOEL_CONF[MAIL_PORT]="${MAIL_PORT:-1025}"
+KOEL_CONF[MAIL_USERNAME]="${MAIL_USERNAME:-null}"
+KOEL_CONF[MAIL_PASSWORD]="${MAIL_PASSWORD:-null}"
+KOEL_CONF[MAIL_ENCRYPTION]="${MAIL_ENCRYPTION:-null}"
+
+KOEL_CONF[SQS_PUBLIC_KEY]=${SQS_PUBLIC_KEY:-}
+KOEL_CONF[SQS_SECRET_KEY]=${SQS_SECRET_KEY:-}
+KOEL_CONF[SQS_QUEUE_PREFIX]=${SQS_QUEUE_PREFIX:-}
+KOEL_CONF[SQS_QUEUE_NAME]=${SQS_QUEUE_NAME:-}
+KOEL_CONF[SQS_QUEUE_REGION]=${SQS_QUEUE_REGION:-}
+# The variables below are Laravel-specific.
+# You can change them if you know what you're doing. Otherwise, just leave them as-is.
+KOEL_CONF[BROADCAST_DRIVER]="${BROADCAST_DRIVER:-log}"
+KOEL_CONF[CACHE_DRIVER]="${CACHE_DRIVER:-file}"
+KOEL_CONF[FILESYSTEM_DISK]="${FILESYSTEM_DISK:-local}"
+KOEL_CONF[QUEUE_CONNECTION]="${QUEUE_CONNECTION:-sync}"
+KOEL_CONF[SESSION_DRIVER]="${SESSION_DRIVER:-file}"
+KOEL_CONF[SESSION_LIFETIME]="${SESSION_LIFETIME:-120}"
+
+rm /var/www/html/.env 2>/dev/null
+ln -s /config/.env /var/www/html/.env
+
+# persist env variables
+if [ ! -f "/config/.env" ]; then
+	# sed in values or skip if value not set
+	for KEY in "${!KOEL_CONF[@]}"; do \
+  	echo "${KEY}=${KOEL_CONF[$KEY]}" >> .temp.env
+	done
+	mv .temp.env /config/.env
+
+  cd /var/www/html
+	yes "" | /usr/bin/php artisan koel:init --no-assets
+fi
+
+lsiown -R abc:abc /config
