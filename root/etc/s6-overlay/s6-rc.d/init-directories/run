@@ -8,6 +8,7 @@ if [ ! -d "/config/storage/framework" ] || [ ! -d "/config/storage/search-indexe
 fi
 rm -rf /var/www/html/storage
 ln -s /config/storage /var/www/html/storage
+cp -f /defaults/mariadb-fix.php /var/www/html/database/migrations/2022_08_01_093952_use_uuids_for_song_ids.php
 
 # permissions
 lsiown abc:abc /music
