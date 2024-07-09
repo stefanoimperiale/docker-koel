@@ -1,6 +1,6 @@
 FROM lsiobase/debian:arm64v8-bullseye
 
-ARG KOEL_VERSION_REF=v6.11.2
+ARG KOEL_VERSION_REF=v6.12.1
 
 # set version label
 ARG BUILD_DATE
